@@ -1,10 +1,14 @@
 var fs = require('fs');
 var readline = require('readline');
 var csv = require('csv');
-var redis = require('redis');
-var client = redis.createClient();
+var Redis = require('ioredis');
+var redis = new Redis();
 
-csv().from.stream(fs.createReadStream('ip.txt')).on('record', importIP);
+csv.parse(fs.readFileSync('ip.txt', 'utf8'), function (err, records) {
+  records.forEach(function (record) {
+    importIP(record);
+  });
+});
 
 
 // 在字符串前补'0'。
@@ -37,7 +41,7 @@ function importIP (data) {
   var location = data[0];
   var minIP = convertIPtoNumber(data[1]);
   var maxIP = convertIPtoNumber(data[2]);
-  client.zadd('ip', minIP, '*' + location, maxIP, location);
+  redis.zadd('ip', minIP, '*' + location, maxIP, location);
 }
 
 var rl = readline.createInterface({
@@ -50,7 +54,7 @@ rl.prompt();
 
 rl.on('line', function (line) {
   ip = convertIPtoNumber(line);
-  client.zrangebyscore('ip', ip, '+inf', 'LIMIT', '0', '1', function (err,result) {
+  redis.zrangebyscore('ip', ip, '+inf', 'LIMIT', '0', '1', function (err,result) {
     if (!Array.isArray(result) || result.length === 0) {
       // 该IP超出了数据库记录的最大IP地址
       console.log('No data.');
