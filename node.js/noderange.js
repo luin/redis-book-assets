@@ -4,7 +4,7 @@ var csv = require('csv');
 var Redis = require('ioredis');
 var redis = new Redis();
 
-csv.parse(fs.readFileSync('ip.txt', 'utf8'), function (err, records) {
+csv.parse(fs.readFileSync('ip.csv', 'utf8'), function (err, records) {
   records.forEach(function (record) {
     importIP(record);
   });
